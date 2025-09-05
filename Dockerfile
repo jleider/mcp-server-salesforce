@@ -6,11 +6,13 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Copy source code first
+COPY src/ ./src/
+COPY tsconfig.json ./
 
-# Copy source code and built files
-COPY dist/ ./dist/
+# Install dependencies and build
+RUN npm install --ignore-scripts && npm run build
+
 COPY .env* ./
 
 # Create non-root user for security
