@@ -11,13 +11,38 @@ import { createSalesforceServer } from "./server-factory.js";
 dotenv.config();
 
 const app = express();
-app.use(express.json());
+
+// JSON parsing middleware with error handling
+app.use(express.json({
+  // Add error handling for malformed JSON
+  type: 'application/json',
+  limit: '1mb'
+}));
+
+// JSON parse error handling middleware
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (error instanceof SyntaxError && 'body' in error) {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32700,
+        message: 'Parse error: Invalid JSON',
+      },
+      id: null,
+    });
+  }
+  next();
+});
 
 // CORS configuration for browser-based clients
 app.use(cors({
   origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*',
   exposedHeaders: ['Mcp-Session-Id'],
-  allowedHeaders: ['Content-Type', 'mcp-session-id'],
+  allowedHeaders: ['Content-Type', 'mcp-session-id', 'Accept', 'Host'],
+  credentials: false,
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  // Always send the access-control-allow-origin header
+  optionsSuccessStatus: 204
 }));
 
 // Map to store transports by session ID
@@ -38,6 +63,19 @@ app.get('/health', (req, res) => {
 // Handle POST requests for client-to-server communication
 app.post('/mcp', async (req, res) => {
   try {
+    // Check Accept header
+    const accept = req.headers.accept;
+    if (!accept || (!accept.includes('application/json') && !accept.includes('text/event-stream'))) {
+      res.status(406).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Not Acceptable: Accept header must include application/json or text/event-stream',
+        },
+        id: null,
+      });
+      return;
+    }
     // Check for existing session ID
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     console.error(`[MCP POST] Session ID: ${sessionId || 'new'}, Method: ${req.body?.method || 'unknown'}`);
