@@ -19,8 +19,8 @@
       "test": "node --test",
       "start": "node dist/index.js",
       "start:http": "node dist/http-server.js",
-      "docker:build": "docker build -t salesforce-mcp-server .",
-      "docker:run": "docker run -d --name salesforce-mcp -p 3000:3000 --env-file .env salesforce-mcp-server",
+      "docker:build": "docker build -t salesforce-mcp-server:streamable-http .",
+      "docker:run": "docker run -d --name salesforce-mcp -p 3000:3000 -e MCP_HTTP_HOST=0.0.0.0 --env-file .env salesforce-mcp-server:streamable-http",
       "docker:stop": "docker stop salesforce-mcp && docker rm salesforce-mcp"
     },
     "keywords": [

@@ -2,7 +2,10 @@ version: '3.8'
 
 services:
   salesforce-mcp-server:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: salesforce-mcp-server:streamable-http
     ports:
       - "3000:3000"
     environment:

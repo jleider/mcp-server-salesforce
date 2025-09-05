@@ -3,17 +3,16 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install git for cloning repository
+RUN apk add --no-cache git
 
-# Copy source code first
-COPY src/ ./src/
-COPY tsconfig.json ./
+# Clone the repository from the streamable-http branch
+RUN git clone -b streamable-http https://github.com/jleider/mcp-server-salesforce.git /tmp/repo && \
+    cp -r /tmp/repo/* /app/ && \
+    rm -rf /tmp/repo
 
 # Install dependencies and build
 RUN npm install --ignore-scripts && npm run build
-
-COPY .env* ./
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs
