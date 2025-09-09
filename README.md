@@ -156,7 +156,14 @@ You can connect to Salesforce using one of two authentication methods:
 4. Save the Client ID and Client Secret
 5. **Important**: Note your instance URL (e.g., `https://your-domain.my.salesforce.com`) as it's required for authentication
 
-### Usage with Claude Desktop
+### Usage Options
+
+The Salesforce MCP server supports two transport methods:
+
+1. **Stdio Transport** (Default) - For use with Claude Desktop and local integrations
+2. **HTTP Transport** - For remote deployments and browser-based clients
+
+#### Stdio Transport (Claude Desktop)
 
 Add to your `claude_desktop_config.json`:
 
@@ -198,6 +205,116 @@ Add to your `claude_desktop_config.json`:
 ```
 
 > **Note**: For OAuth 2.0 Client Credentials Flow, the `SALESFORCE_INSTANCE_URL` must be your exact Salesforce instance URL (e.g., `https://your-domain.my.salesforce.com`). The token endpoint will be constructed as `<instance_url>/services/oauth2/token`.
+
+#### HTTP Transport (Remote Deployment)
+
+For remote deployments, you can run the server as an HTTP service:
+
+##### Installation and Running:
+```bash
+# Install the package
+npm install -g @tsmztech/mcp-server-salesforce
+
+# Run HTTP server (default: http://127.0.0.1:3000)
+salesforce-connector-http
+
+# Or with custom configuration
+MCP_HTTP_PORT=8080 MCP_HTTP_HOST=0.0.0.0 salesforce-connector-http
+```
+
+##### Environment Variables for HTTP Transport:
+```bash
+# Salesforce Configuration (same as stdio)
+SALESFORCE_CONNECTION_TYPE=User_Password
+SALESFORCE_USERNAME=your_username
+SALESFORCE_PASSWORD=your_password
+SALESFORCE_TOKEN=your_security_token
+SALESFORCE_INSTANCE_URL=org_url
+
+# HTTP Server Configuration
+MCP_HTTP_PORT=3000                    # Port to listen on (default: 3000)
+MCP_HTTP_HOST=127.0.0.1              # Host to bind to (default: 127.0.0.1)
+
+# Security Configuration
+ALLOWED_HOSTS=127.0.0.1,localhost    # Comma-separated list of allowed hosts
+ALLOWED_ORIGINS=https://yourdomain.com # Comma-separated list of allowed origins
+
+# CORS Configuration (for browser clients)
+CORS_ORIGINS=*                        # Comma-separated origins or * for all
+```
+
+##### Using with Claude Desktop (HTTP):
+```json
+{
+  "mcpServers": {
+    "salesforce-http": {
+      "command": "salesforce-connector-http",
+      "env": {
+        "SALESFORCE_CONNECTION_TYPE": "User_Password",
+        "SALESFORCE_USERNAME": "your_username",
+        "SALESFORCE_PASSWORD": "your_password",
+        "SALESFORCE_TOKEN": "your_security_token",
+        "MCP_HTTP_PORT": "3000"
+      }
+    }
+  }
+}
+```
+
+##### HTTP Endpoints:
+- `GET /health` - Health check endpoint
+- `POST /mcp` - MCP communication endpoint
+- `GET /mcp` - Server-Sent Events stream (with `mcp-session-id` header)
+- `DELETE /mcp` - Session termination (with `mcp-session-id` header)
+
+##### Features:
+- **Session Management**: Stateful sessions with automatic cleanup
+- **CORS Support**: Browser-compatible with configurable origins
+- **Security**: DNS rebinding protection with allowlisted hosts/origins
+- **Scalable**: Supports multiple concurrent client connections
+- **Health Monitoring**: Built-in health check endpoint
+
+#### Docker Deployment
+
+For containerized deployment:
+
+##### Using Docker:
+```bash
+# Build the image (pulls latest code from GitHub streamable-http branch)
+docker build -t salesforce-mcp-server .
+
+# Run with environment variables
+docker run -d \
+  --name salesforce-mcp \
+  -p 3000:3000 \
+  -e MCP_HTTP_HOST=0.0.0.0 \
+  -e SALESFORCE_USERNAME="your_username" \
+  -e SALESFORCE_PASSWORD="your_password" \
+  -e SALESFORCE_TOKEN="your_token" \
+  salesforce-mcp-server
+```
+
+##### Using Docker Compose:
+```bash
+# Create .env file with your Salesforce credentials
+cp .env.example .env
+# Edit .env with your credentials
+
+# Start the service
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the service
+docker-compose down
+```
+
+##### Docker Environment Variables:
+All the same environment variables as the HTTP transport, plus:
+- `MCP_HTTP_HOST=0.0.0.0` (default for Docker to accept external connections)
+- Health checks automatically configured
+- Runs as non-root user for security
 
 ## Example Usage
 
