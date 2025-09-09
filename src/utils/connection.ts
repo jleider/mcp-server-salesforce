@@ -97,6 +97,7 @@ export async function createSalesforceConnection(config?: ConnectionConfig) {
       console.log("username:", username);
       console.log("password:", password);
       console.log("token:", token);
+      console.log("loginUrl:", loginUrl);
       
       if (!username || !password) {
         throw new Error('SALESFORCE_USERNAME and SALESFORCE_PASSWORD are required for Username/Password authentication');
