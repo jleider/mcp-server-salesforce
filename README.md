@@ -281,7 +281,7 @@ For containerized deployment:
 ##### Using Docker:
 ```bash
 # Build the image (pulls latest code from GitHub streamable-http branch)
-docker build -t salesforce-mcp-server:streamable-http .
+docker build -t salesforce-mcp-server .
 
 # Run with environment variables
 docker run -d \
@@ -291,7 +291,7 @@ docker run -d \
   -e SALESFORCE_USERNAME="your_username" \
   -e SALESFORCE_PASSWORD="your_password" \
   -e SALESFORCE_TOKEN="your_token" \
-  salesforce-mcp-server:streamable-http
+  salesforce-mcp-server
 ```
 
 ##### Using Docker Compose:
